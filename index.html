@@ -1,100 +1,394 @@
-<html><head><base href="https://revennnz.github.io/divisasx/"><title>Divisas</title><style>:root{--primary:#7B2CBF;--primary-hover:#9D4EDD;--secondary:#E0AAFF;--dark:#240046;--light:#F8F9FA;--danger:#FF6B6B;--success:#51CF66}*{box-sizing:border-box;margin:0;padding:0}body,html{height:100%;width:100%;position:fixed;overflow:auto}body{font-family:Poppins,sans-serif;background:linear-gradient(135deg,var(--light) 0,var(--secondary) 100%);padding:1rem;line-height:1.6}.container{width:90%;max-width:600px;margin:20px auto;background:#fff;padding:2rem;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,.1);position:relative}h2,h3{color:var(--dark);margin-bottom:1.5rem}h2{text-align:center;font-size:clamp(1.5rem,4vw,2rem);background:linear-gradient(45deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}.form-group{margin-bottom:1.5rem;width:100%}label{display:block;margin-bottom:.5rem;color:var(--dark);font-weight:500;font-size:clamp(.875rem,2vw,1rem)}input,select{width:100%;padding:.8rem;border:2px solid #E9ECEF;border-radius:8px;font-size:clamp(.875rem,2vw,1rem);transition:all .3s ease}input:focus,select:focus{outline:0;border-color:var(--primary);box-shadow:0 0 0 3px var(--secondary)}.button-group{display:flex;gap:1rem;flex-wrap:wrap}button{flex:1;min-width:120px;padding:.8rem 1.5rem;border:none;border-radius:8px;font-weight:600;font-size:clamp(.875rem,2vw,1rem);cursor:pointer;transition:all .3s ease}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-hover);transform:translateY(-2px)}.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#FF8787;transform:translateY(-2px)}.resultado{margin-top:1.5rem;padding:1rem;border-radius:8px;background:var(--light);font-weight:500;text-align:center;color:var(--dark);font-size:clamp(.875rem,2vw,1rem)}@media (max-width:480px){body{padding:.5rem}.container{width:100%;padding:1rem;margin:10px auto}.button-group{flex-direction:column}button{width:100%}}@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.container{animation:fadeIn .5s ease-out}.form-group{animation:fadeIn .5s ease-out forwards;opacity:0;animation-delay:calc(var(--animation-order) * .1s)}</style><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div class="container"><h2>Convertidor de Divisas</h2><h3>Crear o editar combinación</h3><div class="form-group" style="--animation-order:1"><label for="monedaDesde">Moneda de Origen</label><input id="monedaDesde" placeholder="Ej: USD"></div><div class="form-group" style="--animation-order:2"><label for="monedaHasta">Moneda de Destino</label><input id="monedaHasta" placeholder="Ej: EUR"></div><div class="form-group" style="--animation-order:3"><label for="tasa">Tasa de Cambio</label><input type="number" id="tasa" placeholder="Ingresa la tasa" min="0" step="0.0001"></div><div class="button-group"><button onclick="guardarTasaEnCache()" class="btn-primary">Guardar</button> <button onclick="borrarCache()" class="btn-danger">Borrar Todo</button></div><h3>Combinaciones guardadas</h3><div class="form-group" style="--animation-order:4"><select id="combinaciones" onchange="cargarDesdeLista()"><option value="">Selecciona una combinación</option></select></div><button onclick="eliminarCombinacion()" class="btn-danger">Eliminar selección</button><h3>Realizar conversión</h3><div class="form-group" style="--animation-order:5"><label for="cantidad">Cantidad</label><input type="number" id="cantidad" placeholder="Ingresa el monto" min="0" step="0.01" disabled></div><button onclick="convertirDivisa()" id="btnConvertir" class="btn-primary" disabled>Convertir</button><div class="resultado" id="resultado"></div></div><script>document.addEventListener('DOMContentLoaded', inicializarApp);
+<html lang="es">
 
-    function inicializarApp() {
-      cargarListaCombinaciones();
+<head>
+  <meta charset="UTF-8">
+  <base href="https://revennnz.github.io/divisasx/">
+  <title>Divisas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary: #7B2CBF;
+      --primary-hover: #9D4EDD;
+      --secondary: #E0AAFF;
+      --dark: #240046;
+      --light: #F8F9FA;
+      --danger: #FF6B6B;
+      --success: #51CF66;
     }
 
-    function guardarTasaEnCache() {
-      const monedaDesde = document.getElementById('monedaDesde').value.trim().toUpperCase();
-      const monedaHasta = document.getElementById('monedaHasta').value.trim().toUpperCase();
-      const tasa = parseFloat(document.getElementById('tasa').value);
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      if (!monedaDesde || !monedaHasta || isNaN(tasa)) {
-        alert('Por favor, completa todos los campos correctamente.');
-        return;
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+      position: fixed;
+      overflow: auto;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, var(--light) 0%, var(--secondary) 100%);
+      padding: 1rem;
+      line-height: 1.6;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 600px;
+      margin: 20px auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    h2,
+    h3 {
+      color: var(--dark);
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+      width: 100%;
+      animation: fadeIn 0.5s ease-out forwards;
+      opacity: 0;
+      animation-delay: calc(var(--animation-order) * 0.1s);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+      font-weight: 500;
+      font-size: clamp(0.875rem, 2vw, 1rem);
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid #E9ECEF;
+      border-radius: 8px;
+      font-size: clamp(0.875rem, 2vw, 1rem);
+      transition: all 0.3s ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--secondary);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: clamp(0.875rem, 2vw, 1rem);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #FF8787;
+      transform: translateY(-2px);
+    }
+
+    .resultado {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background: var(--light);
+      font-weight: 500;
+      text-align: center;
+      color: var(--dark);
+      font-size: clamp(0.875rem, 2vw, 1rem);
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--primary);
+      color: white;
+      padding: 15px 30px;
+      border-radius: 10px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .toast.error {
+      background-color: var(--danger);
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0.5rem;
       }
 
-      const key = `${monedaDesde}_${monedaHasta}`;
-      localStorage.setItem(key, tasa);
-      alert(`Tasa de cambio guardada: 1 ${monedaDesde} = ${tasa} ${monedaHasta}`);
-      cargarListaCombinaciones();
-      document.getElementById('monedaDesde').value = '';
-      document.getElementById('monedaHasta').value = '';
-      document.getElementById('tasa').value = '';
-    }
+      .container {
+        width: 100%;
+        padding: 1rem;
+        margin: 10px auto;
+      }
 
-    function cargarListaCombinaciones() {
-      const select = document.getElementById('combinaciones');
-      select.innerHTML = '<option value="">Selecciona una combinación</option>';
+      .button-group {
+        flex-direction: column;
+      }
 
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        const tasa = localStorage.getItem(key);
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = `${key.replace('_', ' a ')}: ${tasa}`;
-        select.appendChild(option);
+      button {
+        width: 100%;
       }
     }
 
-    function cargarDesdeLista() {
-      const seleccion = document.getElementById('combinaciones').value;
-      if (seleccion) {
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="toast" class="toast"></div>
+
+  <div class="container">
+    <h2>Convertidor de Divisas</h2>
+
+    <section class="currency-form">
+      <h3>Crear o editar combinación</h3>
+      <div class="form-group" style="--animation-order: 1">
+        <label for="monedaDesde">Moneda de Origen</label>
+        <input type="text" id="monedaDesde" placeholder="Ej: USD" required>
+      </div>
+      <div class="form-group" style="--animation-order: 2">
+        <label for="monedaHasta">Moneda de Destino</label>
+        <input type="text" id="monedaHasta" placeholder="Ej: EUR" required>
+      </div>
+      <div class="form-group" style="--animation-order: 3">
+        <label for="tasa">Tasa de Cambio</label>
+        <input type="number" id="tasa" placeholder="Ingresa la tasa" min="0" step="0.0001" required>
+      </div>
+      <div class="button-group">
+        <button id="btnGuardar" class="btn-primary">Guardar</button>
+        <button id="btnBorrarTodo" class="btn-danger">Borrar Todo</button>
+      </div>
+    </section>
+
+    <section class="saved-currencies">
+      <h3>Combinaciones guardadas</h3>
+      <div class="form-group" style="--animation-order: 4">
+        <select id="combinaciones">
+          <option value="">Selecciona una combinación</option>
+        </select>
+      </div>
+      <button id="btnEliminar" class="btn-danger">Eliminar selección</button>
+    </section>
+
+    <section class="conversion-section">
+      <h3>Realizar conversión</h3>
+      <div class="form-group" style="--animation-order: 5">
+        <label for="cantidad">Cantidad</label>
+        <input type="number" id="cantidad" placeholder="Ingresa el monto" min="0" step="0.01" disabled>
+      </div>
+      <button id="btnConvertir" class="btn-primary" disabled>Convertir</button>
+
+      <div class="resultado" id="resultado"></div>
+    </section>
+  </div>
+
+  <script>
+    class CurrencyConverter {
+      constructor() {
+        this.initializeElements();
+        this.bindEvents();
+        this.loadSavedCurrencies();
+      }
+
+      initializeElements() {
+        this.monedaDesde = document.getElementById('monedaDesde');
+        this.monedaHasta = document.getElementById('monedaHasta');
+        this.tasa = document.getElementById('tasa');
+        this.cantidad = document.getElementById('cantidad');
+        this.btnConvertir = document.getElementById('btnConvertir');
+        this.btnGuardar = document.getElementById('btnGuardar');
+        this.btnBorrarTodo = document.getElementById('btnBorrarTodo');
+        this.btnEliminar = document.getElementById('btnEliminar');
+        this.combinaciones = document.getElementById('combinaciones');
+        this.resultado = document.getElementById('resultado');
+        this.toast = document.getElementById('toast');
+      }
+
+      bindEvents() {
+        this.btnGuardar.addEventListener('click', () => this.saveExchangeRate());
+        this.btnBorrarTodo.addEventListener('click', () => this.clearAllRates());
+        this.btnEliminar.addEventListener('click', () => this.removeSelectedRate());
+        this.combinaciones.addEventListener('change', () => this.loadSelectedRate());
+        this.btnConvertir.addEventListener('click', () => this.convertCurrency());
+      }
+
+      showToast(message, type = 'success') {
+        this.toast.textContent = message;
+        this.toast.className = `toast show ${type}`;
+
+        setTimeout(() => {
+          this.toast.className = 'toast';
+        }, 3000);
+      }
+
+      saveExchangeRate() {
+        const monedaDesde = this.monedaDesde.value.trim().toUpperCase();
+        const monedaHasta = this.monedaHasta.value.trim().toUpperCase();
+        const tasa = parseFloat(this.tasa.value);
+
+        if (!monedaDesde || !monedaHasta || isNaN(tasa)) {
+          this.showToast('Por favor, completa todos los campos correctamente.', 'error');
+          return;
+        }
+
+        const key = `${monedaDesde}_${monedaHasta}`;
+        localStorage.setItem(key, tasa);
+        this.showToast(`Tasa de cambio guardada: 1 ${monedaDesde} = ${tasa} ${monedaHasta}`);
+        this.loadSavedCurrencies();
+        this.resetForm();
+      }
+
+      loadSavedCurrencies() {
+        this.combinaciones.innerHTML = '<option value="">Selecciona una combinación</option>';
+
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          const tasa = localStorage.getItem(key);
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = `${key.replace('_', ' a ')}: ${tasa}`;
+          this.combinaciones.appendChild(option);
+        }
+      }
+
+      loadSelectedRate() {
+        const seleccion = this.combinaciones.value;
+        if (seleccion) {
+          const [monedaDesde, monedaHasta] = seleccion.split('_');
+          const tasa = localStorage.getItem(seleccion);
+
+          this.monedaDesde.value = monedaDesde;
+          this.monedaHasta.value = monedaHasta;
+          this.tasa.value = tasa;
+
+          this.cantidad.disabled = false;
+          this.btnConvertir.disabled = false;
+          this.cantidad.value = '';
+          this.resultado.innerText = '';
+
+          this.showToast(`Combinación cargada: 1 ${monedaDesde} = ${tasa} ${monedaHasta}`);
+        } else {
+          this.cantidad.disabled = true;
+          this.btnConvertir.disabled = true;
+        }
+      }
+
+      convertCurrency() {
+        const cantidad = parseFloat(this.cantidad.value);
+        const seleccion = this.combinaciones.value;
+
+        if (!seleccion || isNaN(cantidad)) {
+          this.resultado.innerText = 'Por favor, selecciona una combinación y completa la cantidad.';
+          return;
+        }
+
         const [monedaDesde, monedaHasta] = seleccion.split('_');
-        const tasa = localStorage.getItem(seleccion);
+        const tasa = parseFloat(localStorage.getItem(seleccion));
+        const cantidadConvertida = cantidad * tasa;
+        this.resultado.innerText = `${cantidad} ${monedaDesde} = ${cantidadConvertida.toFixed(2)} ${monedaHasta}`;
+      }
 
-        document.getElementById('monedaDesde').value = monedaDesde;
-        document.getElementById('monedaHasta').value = monedaHasta;
-        document.getElementById('tasa').value = tasa;
+      removeSelectedRate() {
+        const seleccion = this.combinaciones.value;
+        if (seleccion) {
+          localStorage.removeItem(seleccion);
+          this.showToast('Combinación eliminada correctamente.');
+          this.loadSavedCurrencies();
+          this.resetForm();
+        } else {
+          this.showToast('Por favor, selecciona una combinación para eliminar.', 'error');
+        }
+      }
 
-        document.getElementById('cantidad').disabled = false;
-        document.getElementById('btnConvertir').disabled = false;
-        document.getElementById('cantidad').value = '';
-        document.getElementById('resultado').innerText = '';
+      clearAllRates() {
+        localStorage.clear();
+        this.showToast('Caché borrado correctamente.');
+        this.loadSavedCurrencies();
+      }
 
-        alert(`Combinación cargada: 1 ${monedaDesde} = ${tasa} ${monedaHasta}`);
-      } else {
-        document.getElementById('cantidad').disabled = true;
-        document.getElementById('btnConvertir').disabled = true;
+      resetForm() {
+        this.monedaDesde.value = '';
+        this.monedaHasta.value = '';
+        this.tasa.value = '';
+        this.cantidad.disabled = true;
+        this.btnConvertir.disabled = true;
+        this.resultado.innerText = '';
       }
     }
 
-    function convertirDivisa() {
-      const cantidad = parseFloat(document.getElementById('cantidad').value);
-      const seleccion = document.getElementById('combinaciones').value;
+    document.addEventListener('DOMContentLoaded', () => new CurrencyConverter());
+  </script>
+</body>
 
-      if (!seleccion || isNaN(cantidad)) {
-        document.getElementById('resultado').innerText =
-        'Por favor, selecciona una combinación y completa la cantidad.';
-        return;
-      }
-
-      const [monedaDesde, monedaHasta] = seleccion.split('_');
-      const tasa = parseFloat(localStorage.getItem(seleccion));
-      const cantidadConvertida = cantidad * tasa;
-      document.getElementById('resultado').innerText =
-        `${cantidad} ${monedaDesde} = ${cantidadConvertida.toFixed(2)} ${monedaHasta}`;
-    }
-
-    function eliminarCombinacion() {
-      const seleccion = document.getElementById('combinaciones').value;
-      if (seleccion) {
-        localStorage.removeItem(seleccion);
-        alert('Combinación eliminada correctamente.');
-        cargarListaCombinaciones();
-        document.getElementById('monedaDesde').value = '';
-        document.getElementById('monedaHasta').value = '';
-        document.getElementById('tasa').value = '';
-        document.getElementById('cantidad').disabled = true;
-        document.getElementById('btnConvertir').disabled = true;
-        document.getElementById('resultado').innerText = '';
-      } else {
-        alert('Por favor, selecciona una combinación para eliminar.');
-      }
-    }
-
-    function borrarCache() {
-      localStorage.clear();
-      alert('Caché borrado correctamente.');
-      cargarListaCombinaciones();
-    }</script></body></html>
+</html>
